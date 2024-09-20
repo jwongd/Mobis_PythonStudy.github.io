@@ -1,46 +1,62 @@
 from collections import deque
-n,m = map(int,input().split())
-dr_1 = [[-1,0],[1,0],[0,1],[0,-1]] #dr_1[0] = [-1,0]
-dr_2 = [[[-1,0],[1,0]],[[0,1],[0,-1]]] #dr_2[0] = [[-1,0],[1,0]]
-dr_3 = [[[-1,0],[0,1]],[[0,1],[1,0]],[[1,0],[0,-1]],[[0,-1],[-1,0]]]
-dr_4 = [[[1,0],[0,1],[0,-1]],[[-1,0],[0,1],[0,-1]],[[-1,0],[1,0],[0,-1]],[[-1,0],[1,0],[0,1]]]
-dx = [-1,1,0,0]
-dy = [0,0,-1,1]
-graph = []
+from copy import deepcopy
+
+dx = [1,0,-1,0] #남 동 북 서 (반시계방향)
+dy = [0,1,0,-1]
+direction ={
+    1: [[0],[1],[2],[3]],
+    2: [[0,2],[1,3]],
+    3: [[0,1],[1,2],[2,3],[3,0]],
+    4: [[0,1,2],[1,2,3],[2,3,0],[3,0,1]],
+    5: [[0,1,2,3]]
+}
+def chk(x,y): #1: ok, 0: not ok
+    return 0<=x<n and 0<=y<m
+
+def move(x,y,dir,tmp):
+    for d in dir:
+        nx,ny = x,y
+        while True:
+            nx += dx[d]
+            ny += dy[d]
+            # out of range or meet the wall
+            if chk(nx,ny) == 0 or tmp[nx][ny] == 6:
+                break
+            if tmp[nx][ny] != 0:
+                continue
+            tmp[nx][ny] = '#'
+def zero_cnt(tmp):
+    global cnt
+    mn = 0
+    for i in tmp:
+        mn += i.count(0)
+    cnt = min(cnt,mn)
+def dfs(depth,board): #deepcopy쓰면 시간손해 큼..
+    #직전 상태 저장
+    tmp = [[j for j in board[i]] for i in range(n)]
+    if depth == len(cctv):
+        zero_cnt(tmp)
+        return
+    x,y,num = cctv[depth]
+    for d in direction[num]:
+        move(x,y,d,tmp)
+        dfs(depth+1,tmp) # backtracking
+        tmp = [[j for j in board[i]] for i in range(n)] #직전상태로 변경
+graph = [] ; cctv = []
+n, m = map(int, input().split())
 cnt = 0
-def bfs5(i,j):
-    global graph
-    q = deque()
-    for dir in range(4): # 5번 CCTV : 0~3 , 1번 CCTV : 0
-        q.append([i,j,dir])
-    while q:
-        x,y,direction = q.popleft()
-        nx = x + dx[direction]
-        ny = y + dy[direction]
-        if nx < 0 or nx>= n or ny<0 or ny>=m or graph[nx][ny] == 6:
-            continue
-        if graph[nx][ny] in range(1,6):
-            q.append([nx,ny,direction])
-            continue
-        graph[nx][ny] = -1
-        q.append([nx, ny, direction])
-
-
 for i in range(n):
     graph.append(list(map(int,input().split())))
 for i in range(n):
     for j in range(m):
-        if graph[i][j] in range(1,5): #1~4
-            cnt+= 1
-for i in range(n):
-    for j in range(m):
-        if graph[i][j] in range(1,6): # 1~5
-            x = graph[i][j]
-            if x == 5:
-                bfs5(i,j)
-            else:
-                bfs(i,j)
-print(*graph)
+        if graph[i][j] in range(1,6):
+            cctv.append((i,j,graph[i][j])) # x, y, 종류
+        if graph[i][j] == 0: cnt+=1
+dfs(0,graph)
+print(cnt)
+
+
+
 
 
 
